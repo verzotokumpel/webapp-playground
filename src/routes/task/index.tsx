@@ -1,8 +1,9 @@
-import { component$, useStore, $ } from '@builder.io/qwik';
+import { component$, useStore, $, useVisibleTask$ } from '@builder.io/qwik';
 import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi'
 import { mainnet, arbitrum } from 'viem/chains'
-import { getAccount } from '@wagmi/core'
-const projectId = "test";
+import { watchAccount, watchNetwork } from '@wagmi/core'
+
+const projectId = "b3dcf1ceae2662cf806ee06cfa46313b";
 
 const metadata = {
   name: 'Web3Modal',
@@ -12,31 +13,47 @@ const metadata = {
 }
 
 const chains = [mainnet, arbitrum]
-const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata })
+const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata });
 const modal = createWeb3Modal({ wagmiConfig, projectId, chains })
 
+type Store = {
+  isConnected: boolean;
+  network: string | undefined;
+  address: string | undefined;
+}
+
 export default component$(() => {
-  const account = getAccount();
-  const state = useStore({
-    isConnected: account.isConnected,
-    address: '',
+  const state = useStore<Store>({
+    isConnected: false,
+    address: undefined,
+    network: undefined,
   });
-  
-  const handleClick = $(
-    () => {
-      const account = getAccount();
-      modal.open();
-      state.address = account.address ?? '';
+
+  const handleClick = $(() => modal.open());
+
+  useVisibleTask$(() => {
+    state.address = wagmiConfig.data?.account;
+    state.isConnected = wagmiConfig.data?.account ? true : false;
+
+    watchAccount((account) => {
+      state.address = account.address;
       state.isConnected = account.isConnected;
-    }
-  );
+    })
+
+    watchNetwork((network) => {
+      state.network = network.chain?.name;
+    })
+  });
+
+  
 
   return (
     <div class="h-screen bg-black text-white">
       <button onClick$={handleClick} class="border-2">
-        {state.isConnected ? "Disocnnect" : "Connect Wallet"}
+        {state.isConnected ? "Disocnnect/ Change Network" : "Connect Wallet"}
       </button>
       <p>address: {state.address}</p>
+      <p>network: {state.network}</p>
     </div>
   );
 });
