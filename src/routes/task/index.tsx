@@ -1,20 +1,7 @@
 import { component$, useStore, $, useVisibleTask$ } from '@builder.io/qwik';
-import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi'
-import { mainnet, arbitrum } from 'viem/chains'
 import { watchAccount, watchNetwork } from '@wagmi/core'
-
-const projectId = "b3dcf1ceae2662cf806ee06cfa46313b";
-
-const metadata = {
-  name: 'Web3Modal',
-  description: 'Web3Modal Example',
-  url: 'https://web3modal.com',
-  icons: ['https://avatars.githubusercontent.com/u/37784886']
-}
-
-const chains = [mainnet, arbitrum]
-const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata });
-const modal = createWeb3Modal({ wagmiConfig, projectId, chains })
+import { modal, wagmiConfig } from '~/utils/modal';
+import { Swap } from '~/components/swap';
 
 type Store = {
   isConnected: boolean;
@@ -23,6 +10,7 @@ type Store = {
 }
 
 export default component$(() => {
+
   const state = useStore<Store>({
     isConnected: false,
     address: undefined,
@@ -45,15 +33,20 @@ export default component$(() => {
     })
   });
 
-  
-
   return (
-    <div class="h-screen bg-black text-white">
-      <button onClick$={handleClick} class="border-2">
-        {state.isConnected ? "Disocnnect/ Change Network" : "Connect Wallet"}
-      </button>
-      <p>address: {state.address}</p>
-      <p>network: {state.network}</p>
+    <div class="h-screen bg-black text-white text-center">
+      <div class="py-20">
+        <button onClick$={handleClick} class="border-2 rounded-full py-2 px-2 mb-10">
+          {state.isConnected ? "Disocnnect/ Change Network" : "Connect Wallet"}
+        </button>
+        <p>address: {state.address}</p>
+        <p>network: {state.network}</p>
+        {state.network == "Goerli" ?
+            <Swap />
+          :
+            <p class="pt-10 text-sm opacity-80">Swap only on Goerli Network</p>
+        }
+      </div>
     </div>
   );
 });
